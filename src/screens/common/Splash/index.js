@@ -23,7 +23,7 @@ const Splash = ({navigation, route}) => {
       "data" TEXT ,
       );`;
 
-    (await db).executeSql(query);
+    await db.executeSql(query);
   };
   return (
     <View>
