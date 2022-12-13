@@ -46,7 +46,7 @@ const Index = props => {
   const devices = useCameraDevices('wide-angle-camera');
   const device = devices.back;
 
-  const camera = useRef < Camera > null;
+  const camera = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -56,6 +56,9 @@ const Index = props => {
   }, []);
 
   const takePhoto = async type => {
+    {
+      console.log(type);
+    }
     setDType('');
     setLastName('');
     setFirstName('');
@@ -74,17 +77,17 @@ const Index = props => {
       var photo = await camera.current.takePhoto({
         flash: 'off',
       });
-      Vibration.vibrate(100);
+      // Vibration.vibrate(100);
       const result = await TextRecognition.recognize(photo.path);
 
-      // console.log(result, 'result');
+      console.log(result, 'result');
 
       if (type === 'ID') {
         const mrzData = [];
         var temp = '';
         for (let i = 0; i < result.length; i++) {
           if (result[i].includes('<')) {
-            mrzData.push(result[i].replaceAll(' ', ''));
+            mrzData.push(result[i].replace(/ /gm, ''));
           }
         }
         // console.log(mrzData.length, 'lenth');
@@ -141,10 +144,10 @@ const Index = props => {
   };
 
   const replaceInvalid = (value, replacewith) => {
-    return value
-      .replaceAll('<', replacewith)
-      .replaceAll('cc', '')
-      .replaceAll('«', '');
+    return value.replace(/</gm, replacewith).replace(/cc|«/gm, '');
+    // .replaceAll('<', replacewith)
+    // .replaceAll('cc', '')
+    // .replaceAll('«', '');
   };
   return device != null && hasPermission ? (
     <ScrollView>

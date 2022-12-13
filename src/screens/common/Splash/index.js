@@ -2,29 +2,21 @@ import {FlatList, StyleSheet, View} from 'react-native';
 import {Text} from '../../../components';
 import React, {useEffect} from 'react';
 import {COMMON} from '../../../navigation/ROUTES';
-import {openDatabase} from 'react-native-sqlite-storage';
+import { createTable } from '../../../utils/queries';
 
-const db = openDatabase({name: 'Scanner.db', location: 'default'});
+let createHistoryTable = `CREATE TABLE IF NOT EXISTS "History" (
+  "title" TEXT ,
+  "data" TEXT 
+);`;
 
 const Splash = ({navigation, route}) => {
   useEffect(() => {
-    createTable();
+    createTable(createHistoryTable, 'History');
     setTimeout(() => {
       navigation.replace(COMMON.HOME);
     }, 4000);
   }, []);
 
-  const createTable = async () => {
-    // create table if not exists
-    console.log('db create--------------');
-
-    const query = `CREATE TABLE IF NOT EXISTS History (
-      "title" TEXT ,
-      "data" TEXT ,
-      );`;
-
-    await db.executeSql(query);
-  };
   return (
     <View>
       <Text>Splash</Text>
