@@ -15,6 +15,7 @@ import {styles} from './scanStyle';
 import {Text} from '..';
 import {BarCodeReadEvent, RNCamera} from 'react-native-camera';
 import {navigationRef} from '../../navigation/RootNavigation';
+import { insertData } from '../../utils/queries';
 
 const deviceHeight = Dimensions.get('screen').height;
 
@@ -36,6 +37,15 @@ const Scan = ({codeType}) => {
   const scanAreaY = topMargin / CAM_VIEW_WIDTH;
   const scanAreaWidth = frameWidth / CAM_VIEW_HEIGHT;
   const scanAreaHeight = frameHeight / CAM_VIEW_WIDTH;
+
+  const insertRecent = () => {
+    const query = `INSERT INTO History (title,data) VALUES ('${result?.type}','${result?.data}');`;
+    if (result !== '') {
+      const inserted = insertData(query);
+      if (inserted) console.log('inserted data');
+    }
+  };
+
 
   const takePhoto = async () => {
     try {
@@ -114,6 +124,7 @@ const Scan = ({codeType}) => {
   };
   const onpressed = () => {
     setScanResult(true);
+    insertRecent();
   };
   return (
     <View style={styles.scrollViewStyle}>
