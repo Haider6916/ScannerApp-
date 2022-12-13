@@ -147,6 +147,7 @@ const Index = props => {
     return value.replace(/</gm, replacewith).replace(/cc|«/gm, '');
     // .replaceAll('<', replacewith)
     // .replaceAll('cc', '')
+    //
     // .replaceAll('«', '');
   };
   return device != null && hasPermission ? (
