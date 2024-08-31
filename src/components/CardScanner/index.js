@@ -1,34 +1,43 @@
-import React, {useState, useEffect, useRef, Fragment} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  Fragment,
+  useLayoutEffect,
+} from 'react';
 import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
-  Vibration,
   View,
+  Share,
 } from 'react-native';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import {Text} from '..';
+import {ScannerResult, Text} from '..';
 import TextRecognition from 'react-native-text-recognition';
 import {styles} from './styles';
-import {
-  getCardType,
-  getCountry,
-  getDate,
-  getGender,
-} from '../../utils/stringOperations';
+import {insertData} from '../../utils/queries';
+import {CopyFF, Save, ShareFF, Shutter} from '../../assets';
+import {BarcodeMaskWithOuterLayout} from '@nartc/react-native-barcode-mask';
+import {BaseColor, useTheme} from '../../config/theme';
+import Clipboard from '@react-native-community/clipboard';
+import Toast from 'react-native-simple-toast';
+import {onPress} from 'deprecated-react-native-prop-types/DeprecatedTextPropTypes';
+import ImageResizer from 'react-native-image-resizer';
+import HomeLoader from './Loader';
+import IDLoader from './IDLoader';
 
 const deviceHeight = Dimensions.get('screen').height;
 const deviceWidth = Dimensions.get('screen').width;
 
 const Index = props => {
-  const {type} = props;
+  const {type, navigation} = props;
+  const colors = useTheme();
   const [hasPermission, setHasPermission] = useState(false);
-
   const [scan, setScan] = useState(false);
   const [ScanResult, setScanResult] = useState(false);
   const [result, setResult] = useState(null);
   const [docType, setDocType] = useState('');
-
   const [dType, setDType] = useState('');
   const [subType, setSubType] = useState('');
   const [country, setCountry] = useState('');
@@ -41,12 +50,21 @@ const Index = props => {
   const [gender, setGender] = useState('');
   const [validity, setValid] = useState('');
   const [personalNum, setPersonalNum] = useState('');
-
   const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [flash, setFlash] = useState('off');
   const devices = useCameraDevices('wide-angle-camera');
   const device = devices.back;
-
   const camera = useRef(null);
+
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     (async () => {
@@ -54,11 +72,64 @@ const Index = props => {
       setHasPermission(status === 'authorized');
     })();
   }, []);
+  /** back button conditional action for find id */
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title:
+        type !== 'OCR'
+          ? ScanResult && !scan
+            ? 'Results'
+            : 'Scan ID Card'
+          : ScanResult && !scan
+          ? 'Results'
+          : 'OCR',
+    });
+  }, [ScanResult, scan]);
 
-  const takePhoto = async type => {
-    {
-      console.log(type);
+  /**
+   * function to insert a record in history
+   */
+  const insertHistory = res => {
+    const idResult = {
+      documentType: dType,
+      subType: subType,
+      country: country,
+      firstName: firstName,
+      lastName: lastName,
+      documentNum: documentNum,
+      passportNum: passportNum,
+      nationality: nationality,
+      dob: dob,
+      gender: gender,
+      validity: validity,
+      personalNum: personalNum,
+    };
+    const time = new Date();
+    const query = `INSERT INTO History (title,dateTime,scannedType,data) VALUES ('${
+      dType === 'I' ? 'ID Card' : dType === 'P' ? 'Passport' : 'OCR Text'
+    }','${time}','${
+      dType === 'I' ? 'ID' : dType === 'P' ? 'Passport' : 'OCR'
+    }','${
+      dType === 'I'
+        ? JSON.stringify(idResult)
+        : dType === 'P'
+        ? JSON.stringify(idResult)
+        : res
+    }');`;
+    if (res !== '') {
+      const inserted = insertData(query);
+      if (inserted) console.log('inserted data');
+      console.log('====================================');
+      console.log(dType);
+      console.log('====================================');
     }
+  };
+
+  /**
+   * function will click a picture and read mrz for ID, Visa or Passport
+   * @param {*} type type OCR | ID
+   */
+  const takePhoto = async type => {
     setDType('');
     setLastName('');
     setFirstName('');
@@ -73,55 +144,71 @@ const Index = props => {
     setDocNum('');
 
     setError(false);
+
+    const mrzData = [];
     try {
       var photo = await camera.current.takePhoto({
-        flash: 'off',
+        flash: flash, //off ,onn
       });
-      // Vibration.vibrate(100);
-      const result = await TextRecognition.recognize(photo.path);
 
-      console.log(result, 'result');
+      const resizedImage = await ImageResizer.createResizedImage(
+        photo.path,
+        800,
+        800,
+        'JPEG',
+        90,
+      );
+      const result = await TextRecognition.recognize(resizedImage.path);
+      console.log('====================================');
+      console.log(result);
+      console.log('====================================');
 
       if (type === 'ID') {
-        const mrzData = [];
         var temp = '';
         for (let i = 0; i < result.length; i++) {
           if (result[i].includes('<')) {
-            mrzData.push(result[i].replace(/ /gm, ''));
+            mrzData.push(
+              result[i]
+                .replace(/ /gm, '')
+                .replace(/«/gm, '<')
+                .replace(/<K/gm, '<<'),
+            );
           }
         }
-        // console.log(mrzData.length, 'lenth');
+        const data = mrzData.length == 1 ? mrzData[0].split('\n') : mrzData;
+        console.log(data, 'data');
+        console.log(mrzData, 'mrzData');
 
-        setResult(result);
-        setScan(false);
-        setScanResult(true);
-
-        if (mrzData.length > 0) {
-          setDType(mrzData[0]?.slice(0, 1));
-
-          if (dType === 'I') {
-            setSubType(mrzData[0]?.slice(1, 2));
-            setCountry(mrzData[0]?.slice(2, 5));
-            setDocNum(mrzData[0]?.slice(5, 14));
-            setDob(mrzData[1]?.slice(0, 6));
-            setGender(mrzData[1]?.slice(7, 8));
-            setValid(mrzData[1]?.slice(8, 14));
-            setNationality(mrzData[1]?.slice(15, 18));
-            const last = mrzData[2]?.split('<<');
-            setLastName(last[0]);
-            setFirstName(last[1]);
-          } else if (dType === 'P' || dType === 'V') {
-            setSubType(mrzData[0]?.substring(1, 2));
-            setCountry(mrzData[0]?.substring(2, 5));
-            const last = mrzData[0]?.split('<<');
+        if (data.length > 0) {
+          setResult(result);
+          setScan(false);
+          setScanResult(true);
+          const temp = data[0]?.slice(0, 1);
+          setDType(temp);
+          console.log(temp, 'dType');
+          if (temp === 'I') {
+            setSubType(data[0]?.slice(1, 2));
+            setCountry(data[0]?.slice(2, 5));
+            setDocNum(data[0]?.slice(5, 14));
+            setDob(data[1]?.slice(0, 6));
+            setGender(data[1]?.slice(7, 8));
+            setValid(data[1]?.slice(8, 14));
+            setNationality(data[1]?.slice(15, 18));
+            const last = data[2]?.split('<<');
+            setLastName(last.length > 0 && last[0]);
+            setFirstName(last.length > 1 && last[1]);
+          } else if (temp === 'P' || temp === 'V') {
+            setSubType(data[0]?.substring(1, 2));
+            setCountry(data[0]?.substring(2, 5));
+            const last = data[0]?.split('<<');
             setLastName(last[1]);
             setFirstName(last[0].substring(5));
-            setPassNum(mrzData[1]?.substring(0, 9));
-            setNationality(mrzData[1]?.substring(10, 13));
-            setDob(mrzData[1]?.substring(13, 19));
-            setGender(mrzData[1]?.substring(20, 21));
-            setValid(mrzData[1]?.substring(21, 27));
-            setPersonalNum(mrzData[1]?.substring(28, 42));
+            setPassNum(data[1]?.substring(0, 9));
+            setNationality(data[1]?.substring(10, 13));
+            setDob(data[1]?.substring(13, 19));
+            setGender(data[1]?.substring(20, 21));
+            setValid(data[1]?.substring(21, 27));
+            setPersonalNum(data[1]?.substring(28, 42));
           } else {
             setError(true);
           }
@@ -133,190 +220,292 @@ const Index = props => {
         setResult(result);
         setScan(false);
         setScanResult(true);
+        // !error && insertHistory(result);
       }
     } catch (e) {
       console.log(e, 'e');
     }
   };
+
+  /**
+   * function responsible for scan again process
+   */
   const scanAgain = () => {
     setScan(true);
     setScanResult(false);
   };
 
+  /**
+   * function will remove invalid values from mrz
+   * @param {*} value from which extra data to be removed
+   * @param {*} replacewith replacement string
+   * @returns clean and formatted value
+   */
   const replaceInvalid = (value, replacewith) => {
     return value.replace(/</gm, replacewith).replace(/cc|«/gm, '');
-    // .replaceAll('<', replacewith)
-    // .replaceAll('cc', '')
-    //
-    // .replaceAll('«', '');
   };
-  return device != null && hasPermission ? (
-    <ScrollView>
-      {type === 'OCR' ? (
-        <Fragment>
-          {ScanResult && !scan && (
-            <Fragment>
-              <Text style={styles.textTitle1}>Result</Text>
-              <View style={ScanResult ? styles.scanCardView : styles.cardView}>
-                <Text>Type : {docType}</Text>
 
-                <Text>
-                  Result :
-                  {result.map(item => {
-                    return item;
-                  })}
-                </Text>
-                <TouchableOpacity onPress={scanAgain} style={styles.buttonScan}>
-                  <View style={styles.buttonWrapper}>
-                    <Text style={{...styles.buttonTextStyle, color: '#2196f3'}}>
-                      Click to scan again
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </Fragment>
-          )}
-          {!ScanResult && (
-            <View style={{height: deviceHeight, backgroundColor: 'black'}}>
-              <Camera
-                style={{height: deviceHeight / 1.3}}
-                device={device}
-                ref={camera}
-                isActive={true}
-                photo={true}
-              />
-              <TouchableOpacity
-                onPress={() => takePhoto('OCR')}
-                style={styles.btnSection}>
-                <Text style={styles.btnText}>Scan</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </Fragment>
-      ) : (
+  const btnData = [
+    {
+      name: 'Copy',
+      icon: <CopyFF />,
+      onPress: () => copyData(),
+    },
+    {
+      name: 'Share',
+      icon: <ShareFF />,
+      onPress: () => shareData(),
+    },
+    {
+      name: 'Save',
+      icon: <Save />,
+      onPress: () => saveData(),
+    },
+  ];
+
+  const copyData = () => {
+    Clipboard.setString(result.toString());
+    Toast.show('Copied!', Toast.SHORT);
+  };
+
+  const shareData = async () => {
+    try {
+      await Share.share({
+        message: `${result}`,
+      });
+    } catch (error) {
+      Toast.show(error.message, Toast.SHORT);
+      console.log(error.message);
+    }
+  };
+
+  const saveData = async () => {
+    insertHistory(result);
+    Toast.show('Saved!', Toast.SHORT);
+  };
+
+  return device != null && hasPermission ? (
+    <View>
+      {type === 'OCR' ? (
         <>
+          {isLoading && <HomeLoader />}
           <Fragment>
             {ScanResult && !scan && (
-              <Fragment>
-                <Text style={styles.textTitle1}>Result</Text>
-
-                <View
-                  style={ScanResult ? styles.scanCardView : styles.cardView}>
-                  {!error ? (
-                    <>
-                      {/* <Text>RawData : {result}</Text> */}
-                      <Text></Text>
+              <>
+                {/* {isLoading &&
+              <View style={{height:deviceHeight,justifyContent:'center',alignItems:'center'}}>
+                <Text>Loding, Please Wait...</Text>
+             <ActivityIndicator size="large" color="black"  /></View>} */}
+                <View>
+                  <View
+                    style={{
+                      height: '85%',
+                      marginBottom: 13,
+                      borderWidth: 1,
+                      margin: 14,
+                      borderColor: BaseColor.textGrey,
+                      borderRadius: 8,
+                    }}>
+                    <ScrollView
+                      contentContainerStyle={
+                        ScanResult ? styles.scanCardView : styles.cardView
+                      }
+                      // style={ScanResult ? styles.scanCardView : styles.cardView}
+                    >
                       <Text>
-                        {`Doc Type : ${
-                          dType && dType.length > 0 ? getCardType(dType) : ''
-                        }`}
+                        {result.map(item => {
+                          return item;
+                        })}
                       </Text>
-                      <Text>
-                        {`Sub Type : ${
-                          subType && subType.length > 0
-                            ? replaceInvalid(subType, '')
-                            : ''
-                        }`}
-                      </Text>
-                      <Text>
-                        {`Country : ${
-                          country && country.length > 0
-                            ? getCountry(replaceInvalid(country, ''))
-                            : ''
-                        }`}
-                      </Text>
-                      <Text>
-                        {`First Name : ${
-                          firstName && firstName.length > 0
-                            ? replaceInvalid(firstName, ' ')
-                            : ''
-                        }`}
-                      </Text>
-                      <Text>
-                        {` Last Name : ${
-                          lastName && lastName.length > 0
-                            ? replaceInvalid(lastName, ' ')
-                            : ''
-                        }`}
-                      </Text>
-                      <Text>{`Document Num : ${
-                        documentNum && documentNum.length > 0
-                          ? replaceInvalid(documentNum, '')
-                          : ''
-                      }`}</Text>
-                      <Text>{`Passport Num : ${
-                        passportNum && passportNum.length > 0
-                          ? replaceInvalid(passportNum, '')
-                          : ''
-                      }`}</Text>
-                      <Text>{`Nationality : ${
-                        nationality && nationality.length > 0
-                          ? getCountry(replaceInvalid(nationality, ''))
-                          : ''
-                      }`}</Text>
-                      <Text>{`Dob : ${
-                        dob && dob.length > 0
-                          ? getDate(replaceInvalid(dob, ''))
-                          : ''
-                      }`}</Text>
-                      <Text>{`Gender : ${
-                        gender && gender.length > 0 ? getGender(gender) : ''
-                      }`}</Text>
-                      <Text>{`Expiry : ${
-                        validity && validity.length > 0
-                          ? getDate(replaceInvalid(validity, ''))
-                          : ''
-                      }`}</Text>
-                      <Text>{`Personal Num : ${
-                        personalNum && personalNum.length > 0
-                          ? replaceInvalid(personalNum, '')
-                          : ''
-                      }`}</Text>
-                    </>
-                  ) : (
-                    <Text style={{color: 'red'}}>Not Scanned Properly</Text>
-                  )}
-                  <TouchableOpacity
-                    onPress={scanAgain}
-                    style={styles.buttonScan}>
-                    <View style={styles.buttonWrapper}>
-                      <Text
-                        style={{...styles.buttonTextStyle, color: '#2196f3'}}>
-                        Click to scan again
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                    </ScrollView>
+                  </View>
+                  <View
+                    style={{
+                      // flex: 0.9,
+                      justifyContent: 'space-evenly',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}>
+                    {btnData.map((item, index) => {
+                      return (
+                        <TouchableOpacity
+                          style={{
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                          onPress={item.onPress}
+                          key={index.toString()}>
+                          <View
+                            style={{
+                              height: 44,
+                              width: 44,
+                              borderRadius: 22,
+                              backgroundColor: colors.appBlue,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            {item.icon}
+                          </View>
+                          <Text body2 regular blackColor>
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
-              </Fragment>
+              </>
             )}
-            {!ScanResult && (
-              <View
-                style={{
-                  height: deviceHeight,
-                  backgroundColor: 'rgba(210, 215, 211, 1)',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
+
+            {!ScanResult && !isLoading && (
+              <View style={{height: deviceHeight, backgroundColor: 'black'}}>
                 <Camera
-                  style={{height: 140, width: deviceWidth}}
+                  style={{height: deviceHeight}}
                   device={device}
                   ref={camera}
                   isActive={true}
                   photo={true}
                 />
+
                 <TouchableOpacity
-                  onPress={() => takePhoto('ID')}
-                  style={styles.btnSection}>
-                  <Text style={styles.btnText}>Scan</Text>
+                  style={{position: 'absolute', bottom: '17%', right: '37%'}}
+                  onPress={() => {
+                    takePhoto('OCR'), setIsLoading(true);
+                  }}>
+                  <Shutter />
+                </TouchableOpacity>
+              </View>
+            )}
+          </Fragment>
+        </>
+      ) : (
+        <>
+          {isLoading && <IDLoader />}
+          <Fragment>
+            {ScanResult && !scan && (
+              <>
+                {/* {isLoading &&
+                <View style={{height:deviceHeight,justifyContent:'center',alignItems:'center'}}>
+                  <Text>Loding, Please Wait...</Text>
+               <ActivityIndicator size="large" color="black"  /></View>} */}
+                <View
+                  style={ScanResult ? styles.scanCardView : styles.cardView}>
+                  {!error ? (
+                    <ScannerResult
+                      dType={dType}
+                      setDType={setDType}
+                      subType={subType}
+                      setSubType={setSubType}
+                      country={country}
+                      setCountry={setCountry}
+                      firstName={firstName}
+                      setFirstName={setFirstName}
+                      lastName={lastName}
+                      setLastName={setLastName}
+                      documentNum={documentNum}
+                      setDocNum={setDocNum}
+                      passportNum={passportNum}
+                      setPassNum={setPassNum}
+                      nationality={nationality}
+                      setNationality={setNationality}
+                      dob={dob}
+                      setDob={setDob}
+                      gender={gender}
+                      setGender={setGender}
+                      validity={validity}
+                      setValid={setValid}
+                      personalNum={personalNum}
+                      setPersonalNum={setPersonalNum}
+                      saveData={() => {
+                        insertHistory(result);
+                        Toast.show('Saved!', Toast.SHORT);
+                        setScan(true);
+                        setScanResult(false);
+                      }}
+                      openCamAgain={scanAgain}
+                    />
+                  ) : (
+                    <>
+                      <Text
+                        style={{color: 'red'}}>{`Not Scanned Properly`}</Text>
+                      <TouchableOpacity
+                        onPress={scanAgain}
+                        style={styles.buttonScan}>
+                        <View style={styles.buttonWrapper}>
+                          <Text
+                            style={{
+                              ...styles.buttonTextStyle,
+                              color: '#2196f3',
+                            }}>
+                            {`Click to scan again`}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </>
+            )}
+            {!ScanResult && !isLoading && (
+              <View
+                style={{
+                  height: deviceHeight,
+                  backgroundColor: colors.whiteBackground,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Camera
+                  style={{height: deviceHeight, width: deviceWidth}}
+                  device={device}
+                  ref={camera}
+                  isActive={true}
+                  photo={true}
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: '23%',
+                    paddingHorizontal: 10,
+                    alignSelf: 'center',
+                  }}>
+                  <Text body2 style={{color: 'white', textAlign: 'center'}}>
+                    exclusively scans machine-readable zones on passports,
+                    visas, and other official documents for quick and accurate
+                    extraction of data.
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    height: '100%',
+                    width: '100%',
+                    position: 'absolute',
+                  }}>
+                  <BarcodeMaskWithOuterLayout
+                    maskOpacity={0.7}
+                    backgroundColor={'#000'}
+                    width={300}
+                    height={120}
+                    showAnimatedLine={false}
+                  />
+                </View>
+                {/* </Camera> */}
+                <TouchableOpacity
+                  style={{position: 'absolute', bottom: '17%', right: '37%'}}
+                  onPress={() =>
+                    setTimeout(function () {
+                      takePhoto('ID'), setIsLoading(true);
+                    }, 1000)
+                  }>
+                  <Shutter />
                 </TouchableOpacity>
               </View>
             )}
           </Fragment>
         </>
       )}
-    </ScrollView>
+    </View>
   ) : (
-    <View style={{backgroundColor: 'black'}}></View>
+    <></>
   );
 };
 export default Index;

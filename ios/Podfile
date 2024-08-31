@@ -10,6 +10,21 @@ target 'Scanner' do
   # Flags change depending on the env values.
   flags = get_default_flags()
 
+  permissions_path = '../node_modules/react-native-permissions/ios'
+
+  
+  pod 'Permission-Calendars', :path => "#{permissions_path}/Calendars"
+  pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
+  pod 'Permission-Contacts', :path => "#{permissions_path}/Contacts"
+  pod 'Permission-LocationAccuracy', :path => "#{permissions_path}/LocationAccuracy"
+  pod 'Permission-LocationAlways', :path => "#{permissions_path}/LocationAlways"
+  pod 'Permission-LocationWhenInUse', :path => "#{permissions_path}/LocationWhenInUse"
+  pod 'Permission-MediaLibrary', :path => "#{permissions_path}/MediaLibrary"
+  pod 'Permission-Microphone', :path => "#{permissions_path}/Microphone"
+  pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications"
+  pod 'Permission-PhotoLibrary', :path => "#{permissions_path}/PhotoLibrary"
+  pod 'Permission-PhotoLibraryAddOnly', :path => "#{permissions_path}/PhotoLibraryAddOnly"
+
   use_react_native!(
     :path => config[:reactNativePath],
     # to enable hermes on iOS, change `false` to `true` and then install pods
@@ -18,6 +33,8 @@ target 'Scanner' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+
+  pod 'BVLinearGradient', :path => '../node_modules/react-native-linear-gradient'
 
   target 'ScannerTests' do
     inherit! :complete

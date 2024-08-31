@@ -12,6 +12,7 @@ export const BaseStyle = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
+    borderWidth:1
   },
   safeAreaView: {
     flex: 1,

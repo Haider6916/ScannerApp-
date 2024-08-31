@@ -97,9 +97,9 @@ const getMonth = month => {
  * @returns formatted date
  */
 export const getDate = date => {
-  const year = date.substring(0, 2);
-  const month = date.substring(2, 4);
-  const day = date.substring(4, 6);
+  const year = date?.substring(0, 2);
+  const month = date?.substring(2, 4);
+  const day = date?.substring(4, 6);
 
   return day + '-' + getMonth(month) + '-' + year;
 };

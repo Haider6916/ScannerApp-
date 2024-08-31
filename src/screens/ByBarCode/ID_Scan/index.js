@@ -1,15 +1,13 @@
-import {StyleSheet, View} from 'react-native';
 import React from 'react';
+import {View} from 'react-native';
 import {CardScanner} from '../../../components';
 
-const IDScan = ({navigation, route}) => {
+const IDScan = ({navigation}) => {
   return (
     <View>
-      <CardScanner type={'ID'} />
+      <CardScanner type={'ID'} navigation={navigation} />
     </View>
   );
 };
 
 export default IDScan;
-
-const styles = StyleSheet.create({});

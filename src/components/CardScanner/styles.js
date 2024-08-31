@@ -2,6 +2,7 @@ import {Dimensions, StyleSheet} from 'react-native';
 
 const deviceHeight = Dimensions.get('screen').height;
 const deviceWidth = Dimensions.get('screen').width;
+
 /**
  * this file contains styles of relevent components
  */
@@ -9,7 +10,6 @@ export const styles = StyleSheet.create({
   scrollView: {
     backgroundColor: 'red',
   },
-
   body: {
     backgroundColor: '#fff',
     justifyContent: 'center',
@@ -70,21 +70,19 @@ export const styles = StyleSheet.create({
     marginLeft: 5,
     marginRight: 5,
     marginTop: '10%',
-    backgroundColor: 'white',
   },
   scanCardView: {
-    width: deviceWidth - 32,
-    // height: deviceHeight,
+    width: deviceWidth,
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    padding: 25,
+    paddingHorizontal: 30,
+    marginTop: 10,
     marginLeft: 5,
     marginRight: 5,
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
   },
-
   buttonWrapper: {
     display: 'flex',
     flexDirection: 'row',

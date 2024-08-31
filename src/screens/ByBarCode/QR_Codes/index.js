@@ -1,15 +1,13 @@
-import {StyleSheet, View} from 'react-native';
 import React from 'react';
-import {Scan, Text} from '../../../components';
+import {View} from 'react-native';
+import {Scan} from '../../../components';
 
-const QRCode = ({navigation, route}) => {
+const QRCode = ({navigation}) => {
   return (
     <View>
-      <Scan codeType="QR" />
+      <Scan codeType="QR" navigation={navigation} />
     </View>
   );
 };
 
 export default QRCode;
-
-const styles = StyleSheet.create({});

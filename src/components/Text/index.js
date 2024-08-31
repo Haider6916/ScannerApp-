@@ -1,7 +1,7 @@
-import {Typography} from '../../config/typography';
 import React from 'react';
+import {Typography} from '../../config/typography';
 import {StyleSheet, Text} from 'react-native';
-import { BaseColor } from '../../config/theme';
+import {BaseColor} from '../../config/theme';
 
 export default function Index(props) {
   const {
@@ -33,21 +33,15 @@ export default function Index(props) {
     heavy,
     black,
     //custom color
-    lightGray,
     whiteColor,
     blackColor,
-    primaryDark,
-    primaryLight,
-    textPrimaryBold,
-    statusBarGray,
-    headerGray,
-    faint,
-    blueColor,
-    bordercolor,
-    lowemphasis,
-    mediumemphasis,
-    highemphasis,
-    titleGray,
+    appBlue,
+    appBlueLight,
+    whiteBackground,
+    notSelected,
+    textGrey,
+    textGreyDark,
+    //extra
     numberOfLines,
     textAlign,
     //custom
@@ -85,39 +79,30 @@ export default function Index(props) {
     // regular && {fontWeight: FontWeight.regular},
     // medium && {fontWeight: FontWeight.medium},
     // semibold && {fontWeight: FontWeight.semibold},
-    // // bold && {fontWeight: FontWeight.bold},
+    // bold && {fontWeight: FontWeight.bold},
     // heavy && {fontWeight: FontWeight.heavy},
     // black && {fontWeight: FontWeight.black},
     // default color
     {color: BaseColor.blackColor},
     //custom for color
-    lightGray && {color: BaseColor.lightGray},
     whiteColor && {color: BaseColor.whiteColor},
     blackColor && {color: BaseColor.blackColor},
-    primaryDark && {color: BaseColor.primaryDark},
-    primaryLight && {color: BaseColor.primaryLight},
-    textPrimaryBold && {color: BaseColor.textPrimaryBold},
-    statusBarGray && {color: BaseColor.statusBarGray},
-    headerGray && {color: BaseColor.headerGray},
-    bordercolor && {color: BaseColor.bordercolor},
-    lowemphasis && {color: BaseColor.lowemphasis},
-    faint && {color: BaseColor.faint},
-    mediumemphasis && {color: BaseColor.mediumemphasis},
-    titleGray && {color: BaseColor.titleGray},
-    highemphasis && {color: BaseColor.highemphasis},
-    blueColor && {color: BaseColor.blueColor},
-    iserror && {color: BaseColor.errorColor},
+    appBlue && {color: BaseColor.appBlue},
+    appBlueLight && {color: BaseColor.appBlueLight},
+    whiteBackground && {color: BaseColor.whiteBackground},
+    notSelected && {color: BaseColor.notSelected},
+    textGrey && {color: BaseColor.textGrey},
+    textGreyDark && {color: BaseColor.textGreyDark},
     //Lato Fonts
-    thin && {fontFamily: 'Lato-Thin'},
-    light && {fontFamily: 'Lato-Light'},
-    regular && {fontFamily: 'Lato-Regular'},
-    bold && {fontFamily: 'Lato-Bold'},
-    black && {fontFamily: 'Lato-Black'},
-
-    ultraLight && {fontFamily: 'Lato-Hairline'},
-    medium && {fontFamily: 'Lato-Medium'},
-    heavy && {fontFamily: 'Lato-Heavy'},
-    semibold && {fontFamily: 'Lato-Semibold'},
+    thin && {fontFamily: 'Roboto-Thin'},
+    light && {fontFamily: 'Roboto-Light'},
+    regular && {fontFamily: 'Roboto-Regular'},
+    bold && {fontFamily: 'Roboto-Bold'},
+    black && {fontFamily: 'Roboto-Black'},
+    ultraLight && {fontFamily: 'Roboto-Thin'},
+    medium && {fontFamily: 'Roboto-Medium'},
+    heavy && {fontFamily: 'Roboto-Black'},
+    semibold && {fontFamily: 'Roboto-Medium'},
     {
       textAlign,
     },

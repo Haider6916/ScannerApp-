@@ -3,11 +3,7 @@ const deviceWidth = Dimensions.get('screen').width;
 const deviceHeight = Dimensions.get('screen').height;
 
 export const styles = StyleSheet.create({
-  scrollViewStyle: {
-    // flex: 1,
-    // justifyContent: 'flex-start',
-    // backgroundColor: '#2196f3',
-  },
+  scrollViewStyle: {},
   header: {
     display: 'flex',
     flexDirection: 'row',
@@ -33,7 +29,7 @@ export const styles = StyleSheet.create({
   },
   cardView: {
     width: deviceWidth - 32,
-    height: deviceHeight ,
+    height: deviceHeight,
     alignSelf: 'center',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -45,13 +41,13 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   scanCardView: {
-    width: deviceWidth - 32,
-    height: deviceHeight ,
+    width: deviceWidth,
+    height: deviceHeight,
     alignSelf: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    // alignItems: 'center',
     borderRadius: 10,
-    padding: 25,
+    padding: 15,
     marginLeft: 5,
     marginRight: 5,
     backgroundColor: 'white',

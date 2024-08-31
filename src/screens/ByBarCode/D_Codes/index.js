@@ -1,18 +1,13 @@
-import {StyleSheet, View} from 'react-native';
 import React from 'react';
-import {Scan, Text} from '../../../components';
+import {View} from 'react-native';
+import {Scan} from '../../../components';
 
-const DCode = ({
-  navigation,
-  route,
-}) => {
+const DCode = ({navigation}) => {
   return (
     <View>
-      <Scan codeType ='BAR'  />
+      <Scan codeType="BAR" navigation={navigation} />
     </View>
   );
 };
 
 export default DCode;
-
-const styles = StyleSheet.create({});

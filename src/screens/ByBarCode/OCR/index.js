@@ -1,11 +1,11 @@
-import {StyleSheet, View} from 'react-native';
 import React from 'react';
+import {View} from 'react-native';
 import {CardScanner} from '../../../components';
 
-const OCR = ({navigation, route}) => {
+const OCR = ({navigation}) => {
   return (
     <View>
-      <CardScanner type={'OCR'} />
+      <CardScanner type={'OCR'} navigation={navigation} />
     </View>
   );
 };
